@@ -1,72 +1,192 @@
 <!DOCTYPE html>
-<html lang="en">
+<html>
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>Azaan Player</title>
+  <meta charset="utf-8">
+  <title>Azaan Player (Local with Adjustments)</title>
+  <meta name="viewport" content="width=device-width,initial-scale=1">
   <style>
     body {
-      margin: 20px;
-      font-family: Arial, sans-serif;
+      margin:0; font-family: Arial, sans-serif; color: #fff; text-align:center;
+      background: url('background.jpg') center / cover no-repeat fixed;
+      display:flex; flex-direction:column; min-height:100vh;
+      background-color: #000;
     }
-    .bg-container {
-      background-image: url('images/background.jpg');
-      background-size: cover;
-      background-position: center;
-      background-repeat: no-repeat;
-      width: 100%;
-      max-width: 800px;
-      height: 250px; /* Adjust to your liking */
-      margin: 20px auto;
-      border-radius: 12px;
-      display: flex;
-      justify-content: center;
-      align-items: center;
-      box-shadow: 0 4px 12px rgba(0,0,0,0.2);
+    .overlay {
+      background: rgba(0,0,0,0.45);
+      padding: 18px; margin: 20px auto; border-radius: 12px;
+      width: 90%; max-width:900px;
+      box-sizing: border-box;
+      box-shadow: 0 8px 24px rgba(0,0,0,0.6);
     }
-    .bg-container h2 {
-      color: white;
-      text-shadow: 2px 2px 6px rgba(0,0,0,0.6);
-      margin: 0;
-    }
-    .player-section {
-      max-width: 800px;
-      margin: 0 auto;
-      padding: 20px;
-    }
+    h1 { margin: 8px 0 12px; font-size: 26px; text-shadow: 1px 1px 4px #000; }
+    .times { font-size:18px; text-align:left; line-height:1.6; margin-bottom:10px; }
+    .controls { margin-top:12px; }
+    button { padding:10px 14px; font-size:16px; border-radius:8px; border:0; margin:6px; }
+    #hadith-box { margin-top:14px; height:90px; overflow:hidden; border-radius:8px; background: rgba(0,0,0,0.55); display:flex; align-items:center; justify-content:center; padding:10px; }
+    #hadith-text { font-size:16px; line-height:1.4; }
+    #unlock { background:#0b7; color:#003; font-weight:700; }
+    #play { background:#06f; color:#fff; }
+    .adjustments { margin-top:15px; background: rgba(0,0,0,0.4); padding:10px; border-radius:8px; font-size:15px; text-align:left; }
+    .adjustments label { display:block; margin:4px 0; }
+    .adjustments input { width:60px; }
   </style>
 </head>
 <body>
-  <div class="player-section">
+  <div class="overlay">
     <h1>Azaan Player</h1>
-    <p>Tap “Unlock Audio” once when the page loads (required on iOS Safari).</p>
-    <button onclick="unlockAudio()">Unlock Audio</button>
-    <button onclick="playAzaan()">▶ Play Azaan</button>
-    <button onclick="stopAzaan()">⏹ Stop</button>
+    <div id="status">Tap <strong>Unlock Audio</strong> once when the page loads (required on iOS Safari).</div>
+    <div id="prayer-times" class="times">Loading prayer times...</div>
 
-    <h3>Adjustments (minutes):</h3>
-    <form>
-      Fajr: <input type="number" id="fajr" value="0"><br>
-      Dhuhr: <input type="number" id="dhuhr" value="0"><br>
-      Asr: <input type="number" id="asr" value="0"><br>
-      Maghrib: <input type="number" id="maghrib" value="0"><br>
-      Isha: <input type="number" id="isha" value="0"><br>
-      <button type="button" onclick="saveAdjustments()">Save Adjustments</button>
-    </form>
+    <div class="controls">
+      <audio id="azan" src="azan.mp3"></audio>
+      <button id="unlock">Unlock Audio</button>
+      <button id="play">▶ Play Azaan</button>
+      <button id="stop">⏹ Stop</button>
+    </div>
 
-    <h3>Hadith:</h3>
-    <div id="hadith">Loading Hadith…</div>
+    <div class="adjustments">
+      <strong>Adjustments (minutes):</strong><br>
+      <label>Fajr: <input type="number" id="adj-Fajr" value="0"></label>
+      <label>Dhuhr: <input type="number" id="adj-Dhuhr" value="0"></label>
+      <label>Asr: <input type="number" id="adj-Asr" value="0"></label>
+      <label>Maghrib: <input type="number" id="adj-Maghrib" value="0"></label>
+      <label>Isha: <input type="number" id="adj-Isha" value="0"></label>
+      <button id="save-adj">💾 Save Adjustments</button>
+    </div>
+
+    <div id="hadith-box"><div id="hadith-text">Loading Hadith...</div></div>
   </div>
 
-  <div class="bg-container">
-    <h2>Background Section</h2>
-  </div>
+<script>
+(function(){
+  var audio = document.getElementById('azan');
+  var unlockBtn = document.getElementById('unlock');
+  var playBtn = document.getElementById('play');
+  var stopBtn = document.getElementById('stop');
+  var status = document.getElementById('status');
+  var prayerDiv = document.getElementById('prayer-times');
 
-  <script>
-    function unlockAudio() { /* Your code here */ }
-    function playAzaan() { /* Your code here */ }
-    function stopAzaan() { /* Your code here */ }
-    function saveAdjustments() { /* Your code here */ }
-  </script>
+  unlockBtn.addEventListener('click', function() {
+    audio.play(); audio.pause();
+    status.innerHTML = 'Audio unlocked. Automatic Azaan will play after you press Play once.';
+  });
+  playBtn.addEventListener('click', function() { audio.play(); });
+  stopBtn.addEventListener('click', function() { audio.pause(); audio.currentTime = 0; });
+
+  // Embedded hadiths
+  var hadiths = [
+    {source: "Sahih Bukhari", text: "The best of you are those who have the best character."},
+    {source: "Sahih Muslim", text: "Make things easy for people and do not make them difficult."},
+    {source: "Bukhari & Muslim", text: "Whoever believes in Allah and the Last Day, let him speak good or remain silent."},
+    {source: "Bukhari", text: "The strong man is not the one who overcomes people by his strength, but the one who controls himself while in anger."},
+    {source: "Tirmidhi", text: "Actions are judged by intentions."},
+    {source: "Ibn Majah", text: "Whoever removes a worldly grief from a believer, Allah will remove from him one of the griefs of the Day of Judgement."},
+    {source: "Nasai", text: "None of you truly believes until he loves for his brother what he loves for himself."},
+    {source: "Ahmad", text: "The best charity is that given when you are rich and healthy."}
+  ];
+  var hadithIndex = 0;
+  function showHadith(){
+    var h = hadiths[hadithIndex];
+    document.getElementById('hadith-text').textContent = (h.source?('['+h.source+'] '):'') + h.text;
+    hadithIndex = (hadithIndex + 1) % hadiths.length;
+  }
+  showHadith();
+  setInterval(showHadith, 15000);
+
+  function getJSON(url, cb, errcb) {
+    var xhr = new XMLHttpRequest();
+    xhr.open('GET', url, true);
+    xhr.onreadystatechange = function() {
+      if (xhr.readyState === 4) {
+        if (xhr.status === 200) {
+          try { cb(JSON.parse(xhr.responseText)); } catch(e) { if (errcb) errcb(e); }
+        } else { if (errcb) errcb(xhr.status); }
+      }
+    };
+    xhr.send();
+  }
+
+  var city = 'Mecca', country = 'Saudi Arabia';
+  var adjustments = JSON.parse(localStorage.getItem('prayerAdjustments') || '{}');
+
+  function applyAdjustmentsToInputs(){
+    ['Fajr','Dhuhr','Asr','Maghrib','Isha'].forEach(function(p){
+      var el = document.getElementById('adj-'+p);
+      if (adjustments[p] !== undefined) el.value = adjustments[p];
+    });
+  }
+  applyAdjustmentsToInputs();
+
+  document.getElementById('save-adj').addEventListener('click', function(){
+    ['Fajr','Dhuhr','Asr','Maghrib','Isha'].forEach(function(p){
+      var val = parseInt(document.getElementById('adj-'+p).value,10);
+      adjustments[p] = isNaN(val)?0:val;
+    });
+    localStorage.setItem('prayerAdjustments', JSON.stringify(adjustments));
+    status.innerHTML = "Adjustments saved. Times will update.";
+    loadPrayerTimes();
+  });
+
+  function loadPrayerTimes() {
+    var today = new Date();
+    var y = today.getFullYear(), m = today.getMonth()+1, d = today.getDate();
+    var dateStr = y + '-' + (m<10?('0'+m):m) + '-' + (d<10?('0'+d):d);
+
+    // MuslimSalat API (replace YOUR_API_KEY with your actual key)
+    var url = 'https://muslimsalat.com/' 
+              + encodeURIComponent(city) + ',' + encodeURIComponent(country)
+              + '/' + dateStr + '/daily.json?key=YOUR_API_KEY';
+
+    getJSON(url, function(resp){
+      try {
+        var times = resp.items[0];
+        var html = '';
+        ['Fajr','Dhuhr','Asr','Maghrib','Isha'].forEach(function(name){
+          var t = adjustTime(times[name.toLowerCase()], adjustments[name]||0);
+          html += name + ': ' + t + '<br>';
+        });
+        prayerDiv.innerHTML = html;
+        scheduleAzan(times);
+      } catch(e) { prayerDiv.innerHTML = 'Prayer times error.'; }
+    }, function(){ prayerDiv.innerHTML = 'Could not fetch prayer times.'; });
+  }
+
+  function adjustTime(timeStr, offsetMinutes){
+    if (!timeStr) return "--:--";
+    var parts = timeStr.split(':');
+    var hh = parseInt(parts[0],10), mm = parseInt(parts[1],10);
+    var dt = new Date();
+    dt.setHours(hh); dt.setMinutes(mm); dt.setSeconds(0);
+    dt = new Date(dt.getTime() + offsetMinutes*60000);
+    var h = dt.getHours(), m = dt.getMinutes();
+    return (h<10?'0'+h:h)+':' + (m<10?'0'+m:m);
+  }
+
+  var scheduled = [];
+  function scheduleAzan(times) {
+    scheduled.forEach(function(id){ clearTimeout(id); });
+    scheduled = [];
+    var now = new Date();
+    ['Fajr','Dhuhr','Asr','Maghrib','Isha'].forEach(function(name){
+      var t = times[name.toLowerCase()] || "00:00";
+      var parts = t.split(':');
+      var hh = parseInt(parts[0],10), mm = parseInt(parts[1],10);
+      var prayerTime = new Date(now.getFullYear(), now.getMonth(), now.getDate(), hh, mm);
+      var offset = adjustments[name]||0;
+      prayerTime = new Date(prayerTime.getTime() + offset*60000);
+      if (prayerTime <= now) return;
+      var delay = prayerTime.getTime() - Date.now();
+      var id = setTimeout(function(){
+        try { audio.play(); } catch(e) {}
+        status.innerHTML = "It's time for " + name + " (" + prayerTime.toLocaleTimeString() + ')';
+      }, delay);
+      scheduled.push(id);
+    });
+  }
+
+  setInterval(loadPrayerTimes, 1000*60*60);
+  loadPrayerTimes();
+})();
+</script>
 </body>
 </html>
