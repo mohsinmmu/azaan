@@ -134,8 +134,9 @@
 
     // MuslimSalat API (replace YOUR_API_KEY with your actual key)
 var url = 'https://muslimsalat.com/' 
-          + encodeURIComponent(city) + ',' + encodeURIComponent(country)
-          + '/' + dateStr + '/daily.json?key=1f7233fbce83a6401549b4598f753073';
+            + encodeURIComponent(city) 
+            + '.json?key=1f7233fbce83a6401549b4598f753073';
+  
      
 
     getJSON(url, function(resp){
