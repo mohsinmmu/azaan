@@ -29,18 +29,21 @@
     .adjustments { margin-top:15px; background: rgba(0,0,0,0.4); padding:10px; border-radius:8px; font-size:15px; text-align:left; }
     .adjustments label { display:block; margin:4px 0; }
     .adjustments input { width:60px; }
+    #status { font-weight:bold; color: #ffd700; margin-bottom: 12px; }
   </style>
 </head>
 <body>
   <div class="overlay">
     <h1>Azaan Player</h1>
-    <div id="status">Tap <strong>Unlock Audio</strong> once when the page loads (required on iOS Safari).</div>
+    <div id="status">🔒 To enable automatic Azaan, please tap <strong>Unlock Audio</strong> once after page loads.<br>
+      <b>This is required by your browser for sound to play at prayer times.</b>
+    </div>
     <div id="prayer-times" class="times">Loading prayer times...</div>
 
     <div class="controls">
       <audio id="azan" src="azan.mp3"></audio>
       <button id="unlock">Unlock Audio</button>
-      <button id="play">▶ Play Azaan</button>
+      <button id="play" disabled>▶ Play Azaan</button>
       <button id="stop">⏹ Stop</button>
     </div>
 
@@ -66,9 +69,28 @@
   var status = document.getElementById('status');
   var prayerDiv = document.getElementById('prayer-times');
 
+  // Disable play button until unlock
+  playBtn.disabled = true;
+
+  function showUnlockMessage() {
+    status.innerHTML = '🔒 To enable automatic Azaan, please tap <strong>Unlock Audio</strong> once after page loads.<br><b>This is required by your browser for sound to play at prayer times.</b>';
+    unlockBtn.style.display = 'inline-block';
+    playBtn.disabled = true;
+  }
+  function showUnlockedMessage() {
+    status.innerHTML = '🔓 Audio unlocked! Azaan will play automatically at prayer times.<br>You can also use ▶ Play Azaan to test sound.';
+    unlockBtn.style.display = 'none';
+    playBtn.disabled = false;
+  }
+
   unlockBtn.addEventListener('click', function() {
-    audio.play(); audio.pause();
-    status.innerHTML = 'Audio unlocked. Automatic Azaan will play after you press Play once.';
+    audio.load();
+    audio.play().then(() => {
+      audio.pause();
+      showUnlockedMessage();
+    }).catch(e => {
+      status.innerHTML = 'Unlock failed, please try again. Some browsers need you to allow audio or press the button again.';
+    });
   });
   playBtn.addEventListener('click', function() { audio.play(); });
   stopBtn.addEventListener('click', function() { audio.pause(); audio.currentTime = 0; });
@@ -129,8 +151,7 @@
 
   function loadPrayerTimes() {
     // MuslimSalat API (replace YOUR_API_KEY with your actual key)
-var url = 'https://cors-anywhere.herokuapp.com/https://muslimsalat.com/london.json?key=1f7233fbce83a6401549b4598f753073';
-
+    var url = 'https://cors-anywhere.herokuapp.com/https://muslimsalat.com/london.json?key=1f7233fbce83a6401549b4598f753073';
     getJSON(url, function(resp){
       try {
         var times = resp.items[0];
@@ -148,19 +169,15 @@ var url = 'https://cors-anywhere.herokuapp.com/https://muslimsalat.com/london.js
 
   function adjustTime(timeStr, offsetMinutes){
     if (!timeStr) return "--:--";
-
     var parts = timeStr.trim().split(/[: ]/);
     var hh = parseInt(parts[0],10);
     var mm = parseInt(parts[1],10);
     var ampm = parts[2] ? parts[2].toLowerCase() : '';
-
     if (ampm === 'pm' && hh < 12) hh += 12;
     if (ampm === 'am' && hh === 12) hh = 0;
-
     var dt = new Date();
     dt.setHours(hh); dt.setMinutes(mm); dt.setSeconds(0);
     dt = new Date(dt.getTime() + offsetMinutes*60000);
-
     var h = dt.getHours(), m = dt.getMinutes();
     return (h<10?'0'+h:h)+':' + (m<10?'0'+m:m);
   }
@@ -170,29 +187,23 @@ var url = 'https://cors-anywhere.herokuapp.com/https://muslimsalat.com/london.js
     scheduled.forEach(function(id){ clearTimeout(id); });
     scheduled = [];
     var now = new Date();
-
     ['Fajr','Dhuhr','Asr','Maghrib','Isha'].forEach(function(name){
       var t = times[name.toLowerCase()];
       if (!t) return;
-
       var parts = t.trim().split(/[: ]/);
       var hh = parseInt(parts[0],10);
       var mm = parseInt(parts[1],10);
       var ampm = parts[2] ? parts[2].toLowerCase() : '';
-
       if (ampm === 'pm' && hh < 12) hh += 12;
       if (ampm === 'am' && hh === 12) hh = 0;
-
       var prayerTime = new Date(now.getFullYear(), now.getMonth(), now.getDate(), hh, mm);
       var offset = adjustments[name]||0;
       prayerTime = new Date(prayerTime.getTime() + offset*60000);
-
       if (prayerTime <= now) return;
       var delay = prayerTime.getTime() - Date.now();
-
       var id = setTimeout(function(){
         try { audio.play(); } catch(e) {}
-        status.innerHTML = "It's time for " + name + " (" + prayerTime.toLocaleTimeString() + ')';
+        status.innerHTML = "⏰ It's time for " + name + " (" + prayerTime.toLocaleTimeString() + ')<br>Azaan is playing automatically.';
       }, delay);
       scheduled.push(id);
     });
@@ -200,6 +211,7 @@ var url = 'https://cors-anywhere.herokuapp.com/https://muslimsalat.com/london.js
 
   setInterval(loadPrayerTimes, 1000*60*60);
   loadPrayerTimes();
+  showUnlockMessage();
 })();
 </script>
 </body>
