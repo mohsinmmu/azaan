@@ -106,7 +106,7 @@
     xhr.send();
   }
 
-  var city = 'London', country = 'united kingdom';
+  var city = 'london'; // change this as needed
   var adjustments = JSON.parse(localStorage.getItem('prayerAdjustments') || '{}');
 
   function applyAdjustmentsToInputs(){
@@ -128,23 +128,18 @@
   });
 
   function loadPrayerTimes() {
-    var today = new Date();
-    var y = today.getFullYear(), m = today.getMonth()+1, d = today.getDate();
-    var dateStr = y + '-' + (m<10?('0'+m):m) + '-' + (d<10?('0'+d):d);
-
     // MuslimSalat API (replace YOUR_API_KEY with your actual key)
-var url = 'https://muslimsalat.com/' 
-            + encodeURIComponent(city) 
-            + '.json?key=1f7233fbce83a6401549b4598f753073';
-  
-     
+    var url = 'https://muslimsalat.com/' 
+              + encodeURIComponent(city) 
+              + '.json?key=1f7233fbce83a6401549b4598f753073';
 
     getJSON(url, function(resp){
       try {
         var times = resp.items[0];
         var html = '';
         ['Fajr','Dhuhr','Asr','Maghrib','Isha'].forEach(function(name){
-          var t = adjustTime(times[name.toLowerCase()], adjustments[name]||0);
+          var key = name.toLowerCase();
+          var t = adjustTime(times[key], adjustments[name]||0);
           html += name + ': ' + t + '<br>';
         });
         prayerDiv.innerHTML = html;
@@ -155,11 +150,19 @@ var url = 'https://muslimsalat.com/'
 
   function adjustTime(timeStr, offsetMinutes){
     if (!timeStr) return "--:--";
-    var parts = timeStr.split(':');
-    var hh = parseInt(parts[0],10), mm = parseInt(parts[1],10);
+
+    var parts = timeStr.trim().split(/[: ]/);
+    var hh = parseInt(parts[0],10);
+    var mm = parseInt(parts[1],10);
+    var ampm = parts[2] ? parts[2].toLowerCase() : '';
+
+    if (ampm === 'pm' && hh < 12) hh += 12;
+    if (ampm === 'am' && hh === 12) hh = 0;
+
     var dt = new Date();
     dt.setHours(hh); dt.setMinutes(mm); dt.setSeconds(0);
     dt = new Date(dt.getTime() + offsetMinutes*60000);
+
     var h = dt.getHours(), m = dt.getMinutes();
     return (h<10?'0'+h:h)+':' + (m<10?'0'+m:m);
   }
@@ -169,15 +172,26 @@ var url = 'https://muslimsalat.com/'
     scheduled.forEach(function(id){ clearTimeout(id); });
     scheduled = [];
     var now = new Date();
+
     ['Fajr','Dhuhr','Asr','Maghrib','Isha'].forEach(function(name){
-      var t = times[name.toLowerCase()] || "00:00";
-      var parts = t.split(':');
-      var hh = parseInt(parts[0],10), mm = parseInt(parts[1],10);
+      var t = times[name.toLowerCase()];
+      if (!t) return;
+
+      var parts = t.trim().split(/[: ]/);
+      var hh = parseInt(parts[0],10);
+      var mm = parseInt(parts[1],10);
+      var ampm = parts[2] ? parts[2].toLowerCase() : '';
+
+      if (ampm === 'pm' && hh < 12) hh += 12;
+      if (ampm === 'am' && hh === 12) hh = 0;
+
       var prayerTime = new Date(now.getFullYear(), now.getMonth(), now.getDate(), hh, mm);
       var offset = adjustments[name]||0;
       prayerTime = new Date(prayerTime.getTime() + offset*60000);
+
       if (prayerTime <= now) return;
       var delay = prayerTime.getTime() - Date.now();
+
       var id = setTimeout(function(){
         try { audio.play(); } catch(e) {}
         status.innerHTML = "It's time for " + name + " (" + prayerTime.toLocaleTimeString() + ')';
