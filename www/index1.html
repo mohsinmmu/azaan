@@ -1,60 +1,200 @@
 <!DOCTYPE html>
-<html lang="en">
+<html>
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Prayer Times Widget</title>
+  <title>Prayer Times</title>
   <style>
     body {
+      background: #2d9471;
+      color: #fff;
       font-family: Arial, sans-serif;
-      background: #f9f9f9;
-      margin: 0;
       padding: 20px;
-      text-align: center;
     }
-    h1 {
-      color: #118c4e;
-    }
-    .widget-container {
-      max-width: 800px;
-      margin: 20px auto;
-      background: #fff;
-      padding: 15px;
-      border-radius: 12px;
-      box-shadow: 0 4px 12px rgba(0,0,0,0.1);
-    }
-    iframe {
-      width: 100%;
+    button {
+      padding: 10px 20px;
+      font-size: 16px;
+      border-radius: 6px;
       border: none;
+      background: #ffcc00;
+      color: #000;
+      cursor: pointer;
+      margin-bottom: 20px;
+    }
+    .row {
+      display: block;
+      margin-bottom: 15px;
+      padding: 8px;
+      border-radius: 6px;
+    }
+    .label {
+      font-weight: bold;
+      display: inline-block;
+      width: 120px;
+    }
+    .value {
+      display: inline-block;
+    }
+    .divider {
+      border-bottom: 1px solid #fff;
+      margin: 10px 0;
+    }
+    .highlight {
+      background: #ffcc00;
+      color: #000;
     }
   </style>
 </head>
 <body>
+  <h2>London Prayer Times</h2>
 
-  <h1>Prayer Times</h1>
+  <!-- Enable Azaan button -->
+  <button id="enableAzan">Enable Azaan</button>
 
-  <div class="widget-container">
-    <iframe 
-      id="msi_481"
-      src="https://quranonline.net/place/521460924/multiscreen/?
-        screens[]=salat-times/?language%3Ddefault%26numbers%3Dwestern%26clock-type%3Danalog%26show-poweredby%3Dfalse%26iqama-enable%3Dtrue%26iqama-show-times%3Dtrue%26color-background%3D%23ffffff%26color-date%3D%23118c4e%26color-digital-clock%3D%23000000%26color-athan-now%3D%23f3a829%26color-salat%3D%233b444c%26color-iqama-time%3D%23d94a3f|10
-        &screens[]=salat-times/?language%3Darabic%26numbers%3Dwestern%26clock-type%3Danalog%26show-poweredby%3Dfalse%26iqama-enable%3Dtrue%26iqama-show-times%3Dtrue%26color-background%3D%23ffffff%26color-date%3D%23118c4e%26color-digital-clock%3D%23000000%26color-athan-now%3D%23f3a829%26color-salat%3D%233b444c%26color-iqama-time%3D%23d94a3f|10
-        &screens[]=analog-clock/?color-second-hand%3D%23f3a829%26clock-adjustment%3D0%26show-poweredby%3Dfalse|10
-        &athan-mode=true&athan-mode-screens=0,1&athan-screen-audio=true"
-      allowfullscreen
-      style="height: 400px;">
-    </iframe>
-  </div>
+  <div id="row-fajr" class="row"><span class="label">Fajr:</span> <span id="fajr" class="value">Loading...</span></div>
+  <div class="row"><span class="label">Fajr Jama'ah:</span> <span id="fajr-jamat" class="value">Loading...</span></div>
+  <div class="divider"></div>
+
+  <div id="row-dhuhr" class="row"><span class="label">Dhuhr:</span> <span id="dhuhr" class="value">Loading...</span></div>
+  <div class="row"><span class="label">Dhuhr Jama'ah:</span> <span id="dhuhr-jamat" class="value">Loading...</span></div>
+  <div class="divider"></div>
+
+  <div id="row-asr" class="row"><span class="label">Asr:</span> <span id="asr" class="value">Loading...</span></div>
+  <div class="row"><span class="label">Asr Jama'ah:</span> <span id="asr-jamat" class="value">Loading...</span></div>
+  <div class="divider"></div>
+
+  <div id="row-maghrib" class="row"><span class="label">Maghrib:</span> <span id="maghrib" class="value">Loading...</span></div>
+  <div class="row"><span class="label">Maghrib Jama'ah:</span> <span id="maghrib-jamat" class="value">Loading...</span></div>
+  <div class="divider"></div>
+
+  <div id="row-isha" class="row"><span class="label">Isha:</span> <span id="isha" class="value">Loading...</span></div>
+  <div class="row"><span class="label">Isha Jama'ah:</span> <span id="isha-jamat" class="value">Loading...</span></div>
+
+  <!-- Hosted Azaan audio -->
+  <audio id="azaan" src="https://www.islamcan.com/audio/adhan/azan1.mp3" preload="auto"></audio>
 
   <script>
-    // Responsive iframe height (60% of width)
-    var msi_481 = document.getElementById("msi_481");
-    function resizeIframe() {
-      msi_481.style.height = (msi_481.offsetWidth * 0.6) + "px";
-    }
-    window.addEventListener("resize", resizeIframe);
-    resizeIframe();
-  </script>
+    var lastDate = null;
+    var prayerTimes = {};
+    var prayerOrder = ["fajr", "dhuhr", "asr", "maghrib", "isha"];
+    var azaanPlayed = {};
+    var azaanEnabled = false;
 
+    function getPrayerTimes() {
+      var xhr = new XMLHttpRequest();
+      xhr.open("GET", "https://www.londonprayertimes.com/api/times/?format=json&key=demo&24hours=true", true);
+
+      xhr.onreadystatechange = function () {
+        if (xhr.readyState === 4) {
+          if (xhr.status === 200) {
+            try {
+              var data = JSON.parse(xhr.responseText);
+
+              document.getElementById("fajr").innerHTML = data.prayer_times.fajr;
+              document.getElementById("fajr-jamat").innerHTML = data.jamaat_times.fajr;
+              document.getElementById("dhuhr").innerHTML = data.prayer_times.dhuhr;
+              document.getElementById("dhuhr-jamat").innerHTML = data.jamaat_times.dhuhr;
+              document.getElementById("asr").innerHTML = data.prayer_times.asr;
+              document.getElementById("asr-jamat").innerHTML = data.jamaat_times.asr;
+              document.getElementById("maghrib").innerHTML = data.prayer_times.maghrib;
+              document.getElementById("maghrib-jamat").innerHTML = data.jamaat_times.maghrib;
+              document.getElementById("isha").innerHTML = data.prayer_times.isha;
+              document.getElementById("isha-jamat").innerHTML = data.jamaat_times.isha;
+
+              prayerTimes = data.prayer_times;
+              lastDate = new Date().getDate();
+              azaanPlayed = {};
+            } catch (e) {
+              console.log("Error parsing JSON: " + e);
+              retryFetch();
+            }
+          } else {
+            console.log("Request failed with status " + xhr.status);
+            retryFetch();
+          }
+        }
+      };
+      xhr.send();
+    }
+
+    function retryFetch() {
+      setTimeout(getPrayerTimes, 60000); // retry in 1 min
+    }
+
+    function parseTime(timeStr) {
+      var parts = timeStr.split(":");
+      if (parts.length < 2) return null;
+      var d = new Date();
+      d.setSeconds(0);
+      d.setMilliseconds(0);
+      d.setHours(parseInt(parts[0], 10));
+      d.setMinutes(parseInt(parts[1], 10));
+      return d;
+    }
+
+    function highlightNextPrayer() {
+      for (var i = 0; i < prayerOrder.length; i++) {
+        var row = document.getElementById("row-" + prayerOrder[i]);
+        if (row) row.className = "row";
+      }
+
+      var now = new Date();
+      var nextPrayer = null;
+
+      for (var j = 0; j < prayerOrder.length; j++) {
+        var prayer = prayerOrder[j];
+        var t = parseTime(prayerTimes[prayer]);
+        if (t && t.getTime() > now.getTime()) {
+          nextPrayer = prayer;
+          break;
+        }
+      }
+
+      if (!nextPrayer) nextPrayer = "fajr";
+
+      var rowNext = document.getElementById("row-" + nextPrayer);
+      if (rowNext) rowNext.className = "row highlight";
+    }
+
+    function checkAzaan() {
+      if (!azaanEnabled) return;
+
+      var now = new Date();
+      for (var i = 0; i < prayerOrder.length; i++) {
+        var prayer = prayerOrder[i];
+        var t = parseTime(prayerTimes[prayer]);
+        if (t) {
+          var diff = Math.abs(now.getTime() - t.getTime());
+          if (diff < 60000 && !azaanPlayed[prayer]) {
+            document.getElementById("azaan").play();
+            azaanPlayed[prayer] = true;
+          }
+        }
+      }
+    }
+
+    // Initial load
+    getPrayerTimes();
+
+    // Periodic checks
+    setInterval(function() {
+      var today = new Date().getDate();
+      if (today !== lastDate) getPrayerTimes();
+
+      highlightNextPrayer();
+      checkAzaan();
+    }, 60000);
+
+    setTimeout(function() {
+      highlightNextPrayer();
+      checkAzaan();
+    }, 5000);
+
+    // Enable Azaan button
+    document.getElementById("enableAzan").addEventListener("click", function() {
+      azaanEnabled = true;
+      this.style.display = "none"; // hide button after tap
+      alert("Azaan enabled! Audio will play at prayer times.");
+    });
+  </script>
 </body>
 </html>
