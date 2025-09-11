@@ -1,217 +1,566 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
-  <meta charset="utf-8">
-  <title>Azaan Player (Local with Adjustments)</title>
-  <meta name="viewport" content="width=device-width,initial-scale=1">
-  <style>
-    body {
-      margin:0; font-family: Arial, sans-serif; color: #fff; text-align:center;
-      background: url('background.jpg') center / cover no-repeat fixed;
-      display:flex; flex-direction:column; min-height:100vh;
-      background-color: #000;
-    }
-    .overlay {
-      background: rgba(0,0,0,0.45);
-      padding: 18px; margin: 20px auto; border-radius: 12px;
-      width: 90%; max-width:900px;
-      box-sizing: border-box;
-      box-shadow: 0 8px 24px rgba(0,0,0,0.6);
-    }
-    h1 { margin: 8px 0 12px; font-size: 26px; text-shadow: 1px 1px 4px #000; }
-    .times { font-size:18px; text-align:left; line-height:1.6; margin-bottom:10px; }
-    .controls { margin-top:12px; }
-    button { padding:10px 14px; font-size:16px; border-radius:8px; border:0; margin:6px; }
-    #hadith-box { margin-top:14px; height:90px; overflow:hidden; border-radius:8px; background: rgba(0,0,0,0.55); display:flex; align-items:center; justify-content:center; padding:10px; }
-    #hadith-text { font-size:16px; line-height:1.4; }
-    #unlock { background:#0b7; color:#003; font-weight:700; }
-    #play { background:#06f; color:#fff; }
-    .adjustments { margin-top:15px; background: rgba(0,0,0,0.4); padding:10px; border-radius:8px; font-size:15px; text-align:left; }
-    .adjustments label { display:block; margin:4px 0; }
-    .adjustments input { width:60px; }
-    #status { font-weight:bold; color: #ffd700; margin-bottom: 12px; }
-  </style>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Azaan - Prayer Times</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        :root {
+            --primary-color: #1a5e63;
+            --secondary-color: #d4af37;
+            --background-color: #f8f5e6;
+            --text-color: #333;
+            --light-text: #777;
+            --card-bg: #ffffff;
+            --shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+
+        body {
+            background-color: var(--background-color);
+            color: var(--text-color);
+            line-height: 1.6;
+            background-image: linear-gradient(to bottom, rgba(248, 245, 230, 0.9), rgba(248, 245, 230, 0.9)), 
+                              url("data:image/svg+xml,%3Csvg width='100' height='100' viewBox='0 0 100 100' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M50 50L0 25L50 0L100 25L50 50Z' fill='%231a5e63' fill-opacity='0.03' fill-rule='evenodd'/%3E%3C/svg%3E");
+        }
+
+        header {
+            background-color: var(--primary-color);
+            color: white;
+            padding: 1.5rem;
+            text-align: center;
+            box-shadow: var(--shadow);
+            position: relative;
+            overflow: hidden;
+        }
+
+        header::before {
+            content: "";
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 5px;
+            background: var(--secondary-color);
+        }
+
+        .logo {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin-bottom: 0.5rem;
+        }
+
+        .logo i {
+            font-size: 2.5rem;
+            margin-right: 0.75rem;
+            color: var(--secondary-color);
+        }
+
+        .logo h1 {
+            font-size: 2rem;
+            font-weight: 600;
+        }
+
+        .date-display {
+            font-size: 1.1rem;
+            margin-top: 0.5rem;
+            opacity: 0.9;
+        }
+
+        .hijri-date {
+            font-size: 0.9rem;
+            margin-top: 0.25rem;
+            opacity: 0.8;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 2rem auto;
+            padding: 0 1.5rem;
+        }
+
+        .location-section {
+            background-color: var(--card-bg);
+            border-radius: 12px;
+            padding: 1.5rem;
+            margin-bottom: 2rem;
+            box-shadow: var(--shadow);
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .location-info {
+            display: flex;
+            align-items: center;
+        }
+
+        .location-info i {
+            font-size: 1.5rem;
+            color: var(--primary-color);
+            margin-right: 1rem;
+        }
+
+        .location-details h2 {
+            font-size: 1.25rem;
+            margin-bottom: 0.25rem;
+        }
+
+        .location-details p {
+            color: var(--light-text);
+        }
+
+        .change-location {
+            background-color: var(--primary-color);
+            color: white;
+            border: none;
+            padding: 0.75rem 1.5rem;
+            border-radius: 50px;
+            cursor: pointer;
+            font-weight: 500;
+            transition: background-color 0.3s;
+            display: flex;
+            align-items: center;
+        }
+
+        .change-location i {
+            margin-right: 0.5rem;
+        }
+
+        .change-location:hover {
+            background-color: #14474b;
+        }
+
+        .prayer-times {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+            gap: 1.5rem;
+            margin-bottom: 2rem;
+        }
+
+        .prayer-card {
+            background-color: var(--card-bg);
+            border-radius: 12px;
+            padding: 1.5rem;
+            box-shadow: var(--shadow);
+            text-align: center;
+            transition: transform 0.3s;
+            position: relative;
+        }
+
+        .prayer-card:hover {
+            transform: translateY(-5px);
+        }
+
+        .prayer-card.current {
+            background-color: var(--primary-color);
+            color: white;
+        }
+
+        .prayer-card.next {
+            border: 2px solid var(--secondary-color);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .prayer-card.next::before {
+            content: "";
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 5px;
+            background: var(--secondary-color);
+        }
+
+        .prayer-name {
+            font-size: 1.5rem;
+            font-weight: 600;
+            margin-bottom: 1rem;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .prayer-name i {
+            margin-right: 0.75rem;
+        }
+
+        .prayer-time {
+            font-size: 2.5rem;
+            font-weight: 700;
+            margin: 1rem 0;
+        }
+
+        .prayer-card.current .prayer-time {
+            color: var(--secondary-color);
+        }
+
+        .countdown {
+            font-size: 1.1rem;
+            margin-top: 0.5rem;
+            padding: 0.5rem;
+            background-color: rgba(255, 255, 255, 0.1);
+            border-radius: 50px;
+            display: inline-block;
+        }
+
+        .next-prayer-label {
+            position: absolute;
+            top: -10px;
+            right: 15px;
+            background-color: var(--secondary-color);
+            color: var(--text-color);
+            padding: 0.25rem 0.75rem;
+            border-radius: 50px;
+            font-size: 0.8rem;
+            font-weight: 600;
+        }
+
+        .settings-panel {
+            background-color: var(--card-bg);
+            border-radius: 12px;
+            padding: 1.5rem;
+            box-shadow: var(--shadow);
+            margin-bottom: 2rem;
+        }
+
+        .settings-panel h2 {
+            font-size: 1.5rem;
+            margin-bottom: 1.5rem;
+            display: flex;
+            align-items: center;
+        }
+
+        .settings-panel h2 i {
+            margin-right: 0.75rem;
+            color: var(--primary-color);
+        }
+
+        .settings-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 1.5rem;
+        }
+
+        .setting-item {
+            margin-bottom: 1rem;
+        }
+
+        .setting-item label {
+            display: block;
+            margin-bottom: 0.5rem;
+            font-weight: 500;
+        }
+
+        .setting-item select {
+            width: 100%;
+            padding: 0.75rem;
+            border-radius: 8px;
+            border: 1px solid #ddd;
+            background-color: white;
+            font-size: 1rem;
+        }
+
+        footer {
+            background-color: var(--primary-color);
+            color: white;
+            text-align: center;
+            padding: 2rem;
+            margin-top: 3rem;
+        }
+
+        .footer-content {
+            max-width: 800px;
+            margin: 0 auto;
+        }
+
+        .footer-content p {
+            margin-bottom: 1rem;
+            opacity: 0.9;
+        }
+
+        .app-links {
+            display: flex;
+            justify-content: center;
+            gap: 1rem;
+            margin-top: 1.5rem;
+        }
+
+        .app-link {
+            display: inline-flex;
+            align-items: center;
+            background-color: rgba(255, 255, 255, 0.1);
+            color: white;
+            padding: 0.75rem 1.5rem;
+            border-radius: 50px;
+            text-decoration: none;
+            transition: background-color 0.3s;
+        }
+
+        .app-link:hover {
+            background-color: rgba(255, 255, 255, 0.2);
+        }
+
+        .app-link i {
+            margin-right: 0.5rem;
+        }
+
+        .loading {
+            text-align: center;
+            padding: 2rem;
+            font-size: 1.2rem;
+            color: var(--primary-color);
+        }
+
+        .loading i {
+            margin-right: 0.5rem;
+            animation: spin 1s linear infinite;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        .error-message {
+            background-color: #ffebee;
+            color: #c62828;
+            padding: 1rem;
+            border-radius: 8px;
+            margin: 1rem 0;
+            text-align: center;
+        }
+
+        @media (max-width: 768px) {
+            .location-section {
+                flex-direction: column;
+                text-align: center;
+                gap: 1rem;
+            }
+            
+            .location-info {
+                justify-content: center;
+            }
+            
+            .prayer-time {
+                font-size: 2rem;
+            }
+            
+            .app-links {
+                flex-direction: column;
+                align-items: center;
+            }
+        }
+    </style>
 </head>
 <body>
-  <div class="overlay">
-    <h1>Azaan Player</h1>
-    <div id="status">🔒 To enable automatic Azaan, please tap <strong>Unlock Audio</strong> once after page loads.<br>
-      <b>This is required by your browser for sound to play at prayer times.</b>
+    <header>
+        <div class="logo">
+            <i class="fas fa-mosque"></i>
+            <h1>Azaan</h1>
+        </div>
+        <div class="date-display">Saturday, June 1, 2024</div>
+        <div class="hijri-date">22 Dhul-Qadah 1445 AH</div>
+    </header>
+
+    <div class="container">
+        <section class="location-section">
+            <div class="location-info">
+                <i class="fas fa-location-dot"></i>
+                <div class="location-details">
+                    <h2>Current Location</h2>
+                    <p id="location-text">Detecting your location...</p>
+                </div>
+            </div>
+            <button class="change-location" id="change-location">
+                <i class="fas fa-location-crosshairs"></i> Change Location
+            </button>
+        </section>
+
+        <div id="prayer-times-container">
+            <div class="loading">
+                <i class="fas fa-spinner"></i> Loading prayer times...
+            </div>
+        </div>
+
+        <section class="settings-panel">
+            <h2><i class="fas fa-sliders-h"></i> Calculation Settings</h2>
+            <div class="settings-grid">
+                <div class="setting-item">
+                    <label for="method">Calculation Method</label>
+                    <select id="method">
+                        <option value="2">Islamic Society of North America (ISNA)</option>
+                        <option value="3">Muslim World League (MWL)</option>
+                        <option value="5">Egyptian General Authority of Survey</option>
+                        <option value="4">Umm Al-Qura University, Makkah</option>
+                        <option value="1">University of Islamic Sciences, Karachi</option>
+                        <option value="7">Institute of Geophysics, University of Tehran</option>
+                    </select>
+                </div>
+
+                <div class="setting-item">
+                    <label for="school">Juristic Method</label>
+                    <select id="school">
+                        <option value="0">Standard (Shafi, Maliki, Hanbali)</option>
+                        <option value="1">Hanafi</option>
+                    </select>
+                </div>
+
+                <div class="setting-item">
+                    <label for="adjustment">Time Adjustment</label>
+                    <select id="adjustment">
+                        <option value="0">No adjustment</option>
+                        <option value="2">+2 minutes</option>
+                        <option value="5">+5 minutes</option>
+                        <option value="10">+10 minutes</option>
+                        <option value="-2">-2 minutes</option>
+                        <option value="-5">-5 minutes</option>
+                        <option value="-10">-10 minutes</option>
+                    </select>
+                </div>
+            </div>
+        </section>
     </div>
-    <div id="prayer-times" class="times">Loading prayer times...</div>
 
-    <div class="controls">
-      <audio id="azan" src="azan.mp3"></audio>
-      <button id="unlock">Unlock Audio</button>
-      <button id="play" disabled>▶ Play Azaan</button>
-      <button id="stop">⏹ Stop</button>
-    </div>
+    <footer>
+        <div class="footer-content">
+            <p>Accurate prayer times based on your current location</p>
+            <p>Data provided by <a href="https://aladhan.com" style="color: var(--secondary-color);">Aladhan API</a></p>
+            <p>© 2024 Azaan Prayer Times. All rights reserved.</p>
+            
+            <div class="app-links">
+                <a href="#" class="app-link">
+                    <i class="fab fa-apple"></i> App Store
+                </a>
+                <a href="#" class="app-link">
+                    <i class="fab fa-google-play"></i> Google Play
+                </a>
+            </div>
+        </div>
+    </footer>
 
-    <div class="adjustments">
-      <strong>Adjustments (minutes):</strong><br>
-      <label>Fajr: <input type="number" id="adj-Fajr" value="0"></label>
-      <label>Dhuhr: <input type="number" id="adj-Dhuhr" value="0"></label>
-      <label>Asr: <input type="number" id="adj-Asr" value="0"></label>
-      <label>Maghrib: <input type="number" id="adj-Maghrib" value="0"></label>
-      <label>Isha: <input type="number" id="adj-Isha" value="0"></label>
-      <button id="save-adj">💾 Save Adjustments</button>
-    </div>
-
-    <div id="hadith-box"><div id="hadith-text">Loading Hadith...</div></div>
-  </div>
-
-<script>
-(function(){
-  var audio = document.getElementById('azan');
-  var unlockBtn = document.getElementById('unlock');
-  var playBtn = document.getElementById('play');
-  var stopBtn = document.getElementById('stop');
-  var status = document.getElementById('status');
-  var prayerDiv = document.getElementById('prayer-times');
-
-  // Disable play button until unlock
-  playBtn.disabled = true;
-
-  function showUnlockMessage() {
-    status.innerHTML = '🔒 To enable automatic Azaan, please tap <strong>Unlock Audio</strong> once after page loads.<br><b>This is required by your browser for sound to play at prayer times.</b>';
-    unlockBtn.style.display = 'inline-block';
-    playBtn.disabled = true;
-  }
-  function showUnlockedMessage() {
-    status.innerHTML = '🔓 Audio unlocked! Azaan will play automatically at prayer times.<br>You can also use ▶ Play Azaan to test sound.';
-    unlockBtn.style.display = 'none';
-    playBtn.disabled = false;
-  }
-
-  unlockBtn.addEventListener('click', function() {
-    audio.load();
-    audio.play().then(() => {
-      audio.pause();
-      showUnlockedMessage();
-    }).catch(e => {
-      status.innerHTML = 'Unlock failed, please try again. Some browsers need you to allow audio or press the button again.';
-    });
-  });
-  playBtn.addEventListener('click', function() { audio.play(); });
-  stopBtn.addEventListener('click', function() { audio.pause(); audio.currentTime = 0; });
-
-  // Embedded hadiths
-  var hadiths = [
-    {source: "Sahih Bukhari", text: "The best of you are those who have the best character."},
-    {source: "Sahih Muslim", text: "Make things easy for people and do not make them difficult."},
-    {source: "Bukhari & Muslim", text: "Whoever believes in Allah and the Last Day, let him speak good or remain silent."},
-    {source: "Bukhari", text: "The strong man is not the one who overcomes people by his strength, but the one who controls himself while in anger."},
-    {source: "Tirmidhi", text: "Actions are judged by intentions."},
-    {source: "Ibn Majah", text: "Whoever removes a worldly grief from a believer, Allah will remove from him one of the griefs of the Day of Judgement."},
-    {source: "Nasai", text: "None of you truly believes until he loves for his brother what he loves for himself."},
-    {source: "Ahmad", text: "The best charity is that given when you are rich and healthy."}
-  ];
-  var hadithIndex = 0;
-  function showHadith(){
-    var h = hadiths[hadithIndex];
-    document.getElementById('hadith-text').textContent = (h.source?('['+h.source+'] '):'') + h.text;
-    hadithIndex = (hadithIndex + 1) % hadiths.length;
-  }
-  showHadith();
-  setInterval(showHadith, 15000);
-
-  function getJSON(url, cb, errcb) {
-    var xhr = new XMLHttpRequest();
-    xhr.open('GET', url, true);
-    xhr.onreadystatechange = function() {
-      if (xhr.readyState === 4) {
-        if (xhr.status === 200) {
-          try { cb(JSON.parse(xhr.responseText)); } catch(e) { if (errcb) errcb(e); }
-        } else { if (errcb) errcb(xhr.status); }
-      }
-    };
-    xhr.send();
-  }
-
-  var city = 'London'; // change as needed
-  var country = 'UK';  // change as needed
-  var adjustments = JSON.parse(localStorage.getItem('prayerAdjustments') || '{}');
-
-  function applyAdjustmentsToInputs(){
-    ['Fajr','Dhuhr','Asr','Maghrib','Isha'].forEach(function(p){
-      var el = document.getElementById('adj-'+p);
-      if (adjustments[p] !== undefined) el.value = adjustments[p];
-    });
-  }
-  applyAdjustmentsToInputs();
-
-  document.getElementById('save-adj').addEventListener('click', function(){
-    ['Fajr','Dhuhr','Asr','Maghrib','Isha'].forEach(function(p){
-      var val = parseInt(document.getElementById('adj-'+p).value,10);
-      adjustments[p] = isNaN(val)?0:val;
-    });
-    localStorage.setItem('prayerAdjustments', JSON.stringify(adjustments));
-    status.innerHTML = "Adjustments saved. Times will update.";
-    loadPrayerTimes();
-  });
-
-  function loadPrayerTimes() {
-    // Adhan API
-    var url = 'https://api.aladhan.com/v1/timingsByCity?city=' + encodeURIComponent(city) + '&country=' + encodeURIComponent(country) + '&method=2';
-    getJSON(url, function(resp){
-      try {
-        if (resp.code !== 200 || !resp.data || !resp.data.timings) {
-          prayerDiv.innerHTML = 'Prayer times error.';
-          return;
+    <script>
+        // DOM elements
+        const locationText = document.getElementById('location-text');
+        const prayerTimesContainer = document.getElementById('prayer-times-container');
+        const changeLocationBtn = document.getElementById('change-location');
+        const methodSelect = document.getElementById('method');
+        const schoolSelect = document.getElementById('school');
+        const adjustmentSelect = document.getElementById('adjustment');
+        
+        // Global state
+        let userLocation = {
+            latitude: null,
+            longitude: null,
+            city: 'Unknown',
+            country: 'Unknown'
+        };
+        
+        let prayerTimesData = null;
+        let currentPrayerIndex = -1;
+        let nextPrayerIndex = -1;
+        let countdownInterval = null;
+        
+        // Prayer order for the day
+        const prayerOrder = ['Fajr', 'Sunrise', 'Dhuhr', 'Asr', 'Maghrib', 'Isha'];
+        
+        // Initialize the application
+        function initApp() {
+            updateDate();
+            getLocation();
+            
+            // Set up event listeners
+            changeLocationBtn.addEventListener('click', manualLocationChange);
+            methodSelect.addEventListener('change', fetchPrayerTimes);
+            schoolSelect.addEventListener('change', fetchPrayerTimes);
+            adjustmentSelect.addEventListener('change', fetchPrayerTimes);
         }
-        var times = resp.data.timings;
-        var html = '';
-        ['Fajr','Dhuhr','Asr','Maghrib','Isha'].forEach(function(name){
-          var t = adjustTime(times[name], adjustments[name]||0);
-          html += name + ': ' + t + '<br>';
-        });
-        prayerDiv.innerHTML = html;
-        scheduleAzan(times);
-      } catch(e) { prayerDiv.innerHTML = 'Prayer times error.'; }
-    }, function(){ prayerDiv.innerHTML = 'Could not fetch prayer times.'; });
-  }
-
-  function adjustTime(timeStr, offsetMinutes){
-    if (!timeStr) return "--:--";
-    // timeStr format: "HH:MM" (24h)
-    var parts = timeStr.trim().split(':');
-    var hh = parseInt(parts[0],10);
-    var mm = parseInt(parts[1],10);
-    var dt = new Date();
-    dt.setHours(hh); dt.setMinutes(mm); dt.setSeconds(0);
-    dt = new Date(dt.getTime() + offsetMinutes*60000);
-    var h = dt.getHours(), m = dt.getMinutes();
-    return (h<10?'0'+h:h)+':' + (m<10?'0'+m:m);
-  }
-
-  var scheduled = [];
-  function scheduleAzan(times) {
-    scheduled.forEach(function(id){ clearTimeout(id); });
-    scheduled = [];
-    var now = new Date();
-    ['Fajr','Dhuhr','Asr','Maghrib','Isha'].forEach(function(name){
-      var t = times[name];
-      if (!t) return;
-      var parts = t.trim().split(':');
-      var hh = parseInt(parts[0],10);
-      var mm = parseInt(parts[1],10);
-      var prayerTime = new Date(now.getFullYear(), now.getMonth(), now.getDate(), hh, mm);
-      var offset = adjustments[name]||0;
-      prayerTime = new Date(prayerTime.getTime() + offset*60000);
-      if (prayerTime <= now) return;
-      var delay = prayerTime.getTime() - Date.now();
-      var id = setTimeout(function(){
-        try { audio.play(); } catch(e) {}
-        status.innerHTML = "⏰ It's time for " + name + " (" + prayerTime.toLocaleTimeString() + ')<br>Azaan is playing automatically.';
-      }, delay);
-      scheduled.push(id);
-    });
-  }
-
-  setInterval(loadPrayerTimes, 1000*60*60);
-  loadPrayerTimes();
-  showUnlockMessage();
-})();
-</script>
-</body>
-</html>
+        
+        // Update date display
+        function updateDate() {
+            const now = new Date();
+            const options = { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' };
+            document.querySelector('.date-display').textContent = now.toLocaleDateString('en-US', options);
+        }
+        
+        // Get user's current location
+        function getLocation() {
+            if (navigator.geolocation) {
+                navigator.geolocation.getCurrentPosition(
+                    position => {
+                        userLocation.latitude = position.coords.latitude;
+                        userLocation.longitude = position.coords.longitude;
+                        reverseGeocode(position.coords.latitude, position.coords.longitude);
+                    },
+                    error => {
+                        console.error('Geolocation error:', error);
+                        locationText.textContent = 'Unable to get location. Using default.';
+                        // Use a default location (Mecca) if geolocation fails
+                        userLocation.latitude = 21.4225;
+                        userLocation.longitude = 39.8262;
+                        userLocation.city = 'Mecca';
+                        userLocation.country = 'Saudi Arabia';
+                        locationText.textContent = `${userLocation.city}, ${userLocation.country}`;
+                        fetchPrayerTimes();
+                    }
+                );
+            } else {
+                locationText.textContent = 'Geolocation is not supported by this browser.';
+                // Use a default location (Mecca)
+                userLocation.latitude = 21.4225;
+                userLocation.longitude = 39.8262;
+                userLocation.city = 'Mecca';
+                userLocation.country = 'Saudi Arabia';
+                locationText.textContent = `${userLocation.city}, ${userLocation.country}`;
+                fetchPrayerTimes();
+            }
+        }
+        
+        // Reverse geocode coordinates to get city and country
+        function reverseGeocode(lat, lng) {
+            const url = `https://api.bigdatacloud.net/data/reverse-geocode-client?latitude=${lat}&longitude=${lng}&localityLanguage=en`;
+            
+            fetch(url)
+                .then(response => response.json())
+                .then(data => {
+                    userLocation.city = data.city || data.locality || 'Unknown';
+                    userLocation.country = data.countryName || 'Unknown';
+                    locationText.textContent = `${userLocation.city}, ${userLocation.country}`;
+                    fetchPrayerTimes();
+                })
+                .catch(error => {
+                    console.error('Reverse geocoding error:', error);
+                    locationText.textContent = `Location: ${lat.toFixed(2)}, ${lng.toFixed(2)}`;
+                    fetchPrayerTimes();
+                });
+        }
+        
+        // Fetch prayer times from Aladhan API
+        function fetchPrayerTimes() {
+            prayerTimesContainer.innerHTML = `
+                <div class="loading">
+                    <i class="fas fa-spinner"></i> Loading prayer times...
+                </div>
+            `;
+            
+            const method = methodSelect.value;
+            const school = schoolSelect.value;
+            
+            // Get current date components
+            const now = new Date();
+            const day = now.getDate();
+            const month = now.getMonth() + 1;
+            const year = now.getFullYear();
+            
+            // Build API URL
+            const api
