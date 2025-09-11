@@ -128,7 +128,8 @@
     xhr.send();
   }
 
-  var city = 'london'; // change this as needed
+  var city = 'London'; // change as needed
+  var country = 'UK';  // change as needed
   var adjustments = JSON.parse(localStorage.getItem('prayerAdjustments') || '{}');
 
   function applyAdjustmentsToInputs(){
@@ -150,15 +151,18 @@
   });
 
   function loadPrayerTimes() {
-    // MuslimSalat API (replace YOUR_API_KEY with your actual key)
-    var url = 'https://cors-anywhere.herokuapp.com/https://muslimsalat.com/london.json?key=1f7233fbce83a6401549b4598f753073';
+    // Adhan API
+    var url = 'https://api.aladhan.com/v1/timingsByCity?city=' + encodeURIComponent(city) + '&country=' + encodeURIComponent(country) + '&method=2';
     getJSON(url, function(resp){
       try {
-        var times = resp.items[0];
+        if (resp.code !== 200 || !resp.data || !resp.data.timings) {
+          prayerDiv.innerHTML = 'Prayer times error.';
+          return;
+        }
+        var times = resp.data.timings;
         var html = '';
         ['Fajr','Dhuhr','Asr','Maghrib','Isha'].forEach(function(name){
-          var key = name.toLowerCase();
-          var t = adjustTime(times[key], adjustments[name]||0);
+          var t = adjustTime(times[name], adjustments[name]||0);
           html += name + ': ' + t + '<br>';
         });
         prayerDiv.innerHTML = html;
@@ -169,12 +173,10 @@
 
   function adjustTime(timeStr, offsetMinutes){
     if (!timeStr) return "--:--";
-    var parts = timeStr.trim().split(/[: ]/);
+    // timeStr format: "HH:MM" (24h)
+    var parts = timeStr.trim().split(':');
     var hh = parseInt(parts[0],10);
     var mm = parseInt(parts[1],10);
-    var ampm = parts[2] ? parts[2].toLowerCase() : '';
-    if (ampm === 'pm' && hh < 12) hh += 12;
-    if (ampm === 'am' && hh === 12) hh = 0;
     var dt = new Date();
     dt.setHours(hh); dt.setMinutes(mm); dt.setSeconds(0);
     dt = new Date(dt.getTime() + offsetMinutes*60000);
@@ -188,14 +190,11 @@
     scheduled = [];
     var now = new Date();
     ['Fajr','Dhuhr','Asr','Maghrib','Isha'].forEach(function(name){
-      var t = times[name.toLowerCase()];
+      var t = times[name];
       if (!t) return;
-      var parts = t.trim().split(/[: ]/);
+      var parts = t.trim().split(':');
       var hh = parseInt(parts[0],10);
       var mm = parseInt(parts[1],10);
-      var ampm = parts[2] ? parts[2].toLowerCase() : '';
-      if (ampm === 'pm' && hh < 12) hh += 12;
-      if (ampm === 'am' && hh === 12) hh = 0;
       var prayerTime = new Date(now.getFullYear(), now.getMonth(), now.getDate(), hh, mm);
       var offset = adjustments[name]||0;
       prayerTime = new Date(prayerTime.getTime() + offset*60000);
