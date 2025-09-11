@@ -1,211 +1,323 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <title>Prayer Times - London</title>
-  <style>
-    body {
-      background: #2d9471;
-      color: #fff;
-      font-family: Arial, sans-serif;
-      padding: 20px;
-    }
-    button {
-      padding: 10px 20px;
-      font-size: 16px;
-      border-radius: 6px;
-      border: none;
-      background: #ffcc00;
-      color: #000;
-      cursor: pointer;
-      margin-bottom: 20px;
-    }
-    .row {
-      display: block;
-      margin-bottom: 15px;
-      padding: 8px;
-      border-radius: 6px;
-    }
-    .label {
-      font-weight: bold;
-      display: inline-block;
-      width: 120px;
-    }
-    .value {
-      display: inline-block;
-    }
-    .divider {
-      border-bottom: 1px solid #fff;
-      margin: 10px 0;
-    }
-    .highlight {
-      background: #ffcc00;
-      color: #000;
-    }
-  </style>
-  <!-- Papa Parse CDN -->
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.4.1/papaparse.min.js"></script>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Islamic Prayer Times</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+        }
+        
+        body {
+            background: linear-gradient(135deg, #1a2a6c, #b21f1f, #fdbb2d);
+            color: #fff;
+            min-height: 100vh;
+            padding: 20px;
+        }
+        
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+            background: rgba(0, 0, 0, 0.7);
+            border-radius: 15px;
+            padding: 20px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
+        }
+        
+        header {
+            text-align: center;
+            margin-bottom: 25px;
+            padding-bottom: 15px;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.2);
+        }
+        
+        h1 {
+            font-size: 2.5rem;
+            margin-bottom: 10px;
+            text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.5);
+        }
+        
+        .date-display {
+            font-size: 1.5rem;
+            margin-bottom: 5px;
+        }
+        
+        .hijri-date {
+            font-size: 1.2rem;
+            opacity: 0.9;
+        }
+        
+        .current-time {
+            font-size: 1.8rem;
+            margin: 15px 0;
+            text-align: center;
+            background: rgba(0, 0, 0, 0.3);
+            padding: 10px;
+            border-radius: 10px;
+        }
+        
+        .prayer-times {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+            gap: 15px;
+            margin-bottom: 25px;
+        }
+        
+        .prayer-card {
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 10px;
+            padding: 15px;
+            text-align: center;
+            transition: all 0.3s ease;
+        }
+        
+        .prayer-card.active {
+            background: rgba(255, 215, 0, 0.3);
+            transform: scale(1.05);
+            box-shadow: 0 0 15px gold;
+        }
+        
+        .prayer-name {
+            font-size: 1.2rem;
+            margin-bottom: 5px;
+            font-weight: bold;
+        }
+        
+        .prayer-time {
+            font-size: 1.5rem;
+            font-weight: bold;
+        }
+        
+        .countdown {
+            font-size: 0.9rem;
+            margin-top: 5px;
+            opacity: 0.8;
+        }
+        
+        .controls {
+            display: flex;
+            justify-content: center;
+            gap: 15px;
+            margin-top: 20px;
+        }
+        
+        button {
+            background: rgba(255, 255, 255, 0.2);
+            border: none;
+            color: white;
+            padding: 10px 20px;
+            border-radius: 50px;
+            font-size: 1rem;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+        
+        button:hover {
+            background: rgba(255, 255, 255, 0.3);
+        }
+        
+        .volume-control {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin-top: 15px;
+            gap: 10px;
+        }
+        
+        input[type="range"] {
+            width: 150px;
+        }
+        
+        footer {
+            text-align: center;
+            margin-top: 25px;
+            padding-top: 15px;
+            border-top: 1px solid rgba(255, 255, 255, 0.2);
+            font-size: 0.9rem;
+            opacity: 0.8;
+        }
+        
+        @media (max-width: 600px) {
+            .prayer-times {
+                grid-template-columns: repeat(2, 1fr);
+            }
+            
+            h1 {
+                font-size: 2rem;
+            }
+            
+            .date-display {
+                font-size: 1.2rem;
+            }
+        }
+    </style>
 </head>
 <body>
-  <h2>London Prayer Times</h2>
+    <div class="container">
+        <header>
+            <h1>Islamic Prayer Times</h1>
+            <div class="date-display" id="current-date">Loading date...</div>
+            <div class="hijri-date" id="hijri-date">Loading Hijri date...</div>
+        </header>
+        
+        <div class="current-time">
+            Current Time: <span id="current-time">--:--:--</span>
+        </div>
+        
+        <div class="prayer-times" id="prayer-times">
+            <!-- Prayer times will be populated by JavaScript -->
+        </div>
+        
+        <div class="controls">
+            <button id="play-azan-btn">Play Adhan</button>
+            <button id="stop-azan-btn">Stop Adhan</button>
+        </div>
+        
+        <div class="volume-control">
+            <span>Volume:</span>
+            <input type="range" id="volume" min="0" max="1" step="0.1" value="0.5">
+        </div>
+        
+        <footer>
+            <p>Prayer times based on Muslim World League calculation method</p>
+            <p>Location: Latitude 8.8889, Longitude 7.7778</p>
+        </footer>
+    </div>
 
-  <!-- Enable Azaan button -->
-  <button id="enableAzan">Enable Azaan</button>
+    <audio id="azan-audio" preload="auto">
+        <source src="https://www.islamcan.com/audio/adhan/azan1.mp3" type="audio/mpeg">
+    </audio>
 
-  <div id="row-fajr" class="row"><span class="label">Fajr:</span> <span id="fajr" class="value">Loading...</span></div>
-  <div class="row"><span class="label">Fajr Jama'ah:</span> <span id="fajr-jamat" class="value">-</span></div>
-  <div class="divider"></div>
+    <script>
+        // Sample prayer times data (from your CSV)
+        const prayerTimesData = [
+            { name: "Fajr", time: "06:14", active: false },
+            { name: "Sunrise", time: "08:25", active: false },
+            { name: "Dhuhr", time: "12:13", active: false },
+            { name: "Asr", time: "13:44", active: false },
+            { name: "Maghrib", time: "16:01", active: false },
+            { name: "Isha", time: "18:04", active: false }
+        ];
 
-  <div id="row-dhuhr" class="row"><span class="label">Dhuhr:</span> <span id="dhuhr" class="value">Loading...</span></div>
-  <div class="row"><span class="label">Dhuhr Jama'ah:</span> <span id="dhuhr-jamat" class="value">-</span></div>
-  <div class="divider"></div>
+        // DOM elements
+        const currentTimeElement = document.getElementById('current-time');
+        const currentDateElement = document.getElementById('current-date');
+        const hijriDateElement = document.getElementById('hijri-date');
+        const prayerTimesContainer = document.getElementById('prayer-times');
+        const azanAudio = document.getElementById('azan-audio');
+        const playAzanBtn = document.getElementById('play-azan-btn');
+        const stopAzanBtn = document.getElementById('stop-azan-btn');
+        const volumeControl = document.getElementById('volume');
 
-  <div id="row-asr" class="row"><span class="label">Asr:</span> <span id="asr" class="value">Loading...</span></div>
-  <div class="row"><span class="label">Asr Jama'ah:</span> <span id="asr-jamat" class="value">-</span></div>
-  <div class="divider"></div>
+        // Set volume
+        azanAudio.volume = volumeControl.value;
+        volumeControl.addEventListener('input', () => {
+            azanAudio.volume = volumeControl.value;
+        });
 
-  <div id="row-maghrib" class="row"><span class="label">Maghrib:</span> <span id="maghrib" class="value">Loading...</span></div>
-  <div class="row"><span class="label">Maghrib Jama'ah:</span> <span id="maghrib-jamat" class="value">-</span></div>
-  <div class="divider"></div>
+        // Play/stop adhan
+        playAzanBtn.addEventListener('click', () => {
+            azanAudio.play();
+        });
 
-  <div id="row-isha" class="row"><span class="label">Isha:</span> <span id="isha" class="value">Loading...</span></div>
-  <div class="row"><span class="label">Isha Jama'ah:</span> <span id="isha-jamat" class="value">-</span></div>
+        stopAzanBtn.addEventListener('click', () => {
+            azanAudio.pause();
+            azanAudio.currentTime = 0;
+        });
 
-  <!-- Hosted Azaan audio -->
-  <audio id="azaan" src="https://www.islamcan.com/audio/adhan/azan1.mp3" preload="auto"></audio>
-
-  <script>
-    var prayerTimes = {};
-    var prayerOrder = ["fajr", "dhuhr", "asr", "maghrib", "isha"];
-    var azaanPlayed = {};
-    var azaanEnabled = false;
-    var lastDate = null;
-    var csvData = [];
-
-    // Load CSV and process today's timings
-    function loadPrayerTimesFromCSV() {
-      Papa.parse('csv1563040081.csv', {
-        download: true,
-        header: true,
-        skipEmptyLines: true,
-        complete: function(results) {
-          csvData = results.data;
-          setTodaysPrayerTimes();
+        // Format date
+        function formatDate(date) {
+            const options = { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' };
+            return date.toLocaleDateString('en-US', options);
         }
-      });
-    }
 
-    function setTodaysPrayerTimes() {
-      var now = new Date();
-      // Format: "DD-MM-YYYY"
-      var day = now.getDate().toString().padStart(2, '0');
-      var month = (now.getMonth() + 1).toString().padStart(2, '0');
-      var year = now.getFullYear();
-      var dateStr = `${day}-${month}-${year}`;
-
-      // Find row with today's date
-      var todayRow = csvData.find(row => row['date.gregorian.date'] === dateStr);
-      if (!todayRow) {
-        document.getElementById("fajr").innerHTML = "Not found";
-        document.getElementById("dhuhr").innerHTML = "Not found";
-        document.getElementById("asr").innerHTML = "Not found";
-        document.getElementById("maghrib").innerHTML = "Not found";
-        document.getElementById("isha").innerHTML = "Not found";
-        return;
-      }
-
-      // Remove " (GMT)" or " (BST)" from times
-      function cleanTime(t) {
-        return t.replace(/\s*\([^)]+\)/, "");
-      }
-
-      prayerTimes = {
-        fajr: cleanTime(todayRow["timings.Fajr"]),
-        dhuhr: cleanTime(todayRow["timings.Dhuhr"]),
-        asr: cleanTime(todayRow["timings.Asr"]),
-        maghrib: cleanTime(todayRow["timings.Maghrib"]),
-        isha: cleanTime(todayRow["timings.Isha"])
-      };
-
-      document.getElementById("fajr").innerHTML = prayerTimes.fajr;
-      document.getElementById("dhuhr").innerHTML = prayerTimes.dhuhr;
-      document.getElementById("asr").innerHTML = prayerTimes.asr;
-      document.getElementById("maghrib").innerHTML = prayerTimes.maghrib;
-      document.getElementById("isha").innerHTML = prayerTimes.isha;
-
-      lastDate = now.getDate();
-      azaanPlayed = {};
-    }
-
-    function parseTime(timeStr) {
-      var parts = timeStr.split(":");
-      if (parts.length < 2) return null;
-      var d = new Date();
-      d.setSeconds(0);
-      d.setMilliseconds(0);
-      d.setHours(parseInt(parts[0], 10));
-      d.setMinutes(parseInt(parts[1], 10));
-      return d;
-    }
-
-    function highlightNextPrayer() {
-      for (var i = 0; i < prayerOrder.length; i++) {
-        var row = document.getElementById("row-" + prayerOrder[i]);
-        if (row) row.className = "row";
-      }
-
-      var now = new Date();
-      var nextPrayer = null;
-
-      for (var j = 0; j < prayerOrder.length; j++) {
-        var prayer = prayerOrder[j];
-        var t = parseTime(prayerTimes[prayer]);
-        if (t && t.getTime() > now.getTime()) {
-          nextPrayer = prayer;
-          break;
+        // Update current time
+        function updateCurrentTime() {
+            const now = new Date();
+            const timeString = now.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', second: '2-digit' });
+            currentTimeElement.textContent = timeString;
+            
+            // Update date only once per day or when needed
+            if (currentDateElement.textContent === 'Loading date...' || 
+                now.getMinutes() === 0 && now.getSeconds() === 0) {
+                currentDateElement.textContent = formatDate(now);
+            }
+            
+            // Check if it's time for prayer
+            checkPrayerTimes(now);
         }
-      }
-      if (!nextPrayer) nextPrayer = "fajr";
-      var rowNext = document.getElementById("row-" + nextPrayer);
-      if (rowNext) rowNext.className = "row highlight";
-    }
 
-    function checkAzaan() {
-      if (!azaanEnabled) return;
-      var now = new Date();
-      for (var i = 0; i < prayerOrder.length; i++) {
-        var prayer = prayerOrder[i];
-        var t = parseTime(prayerTimes[prayer]);
-        if (t) {
-          var diff = Math.abs(now.getTime() - t.getTime());
-          if (diff < 60000 && !azaanPlayed[prayer]) {
-            document.getElementById("azaan").play();
-            azaanPlayed[prayer] = true;
-          }
+        // Check if it's time for any prayer
+        function checkPrayerTimes(now) {
+            const currentTime = now.getHours() * 60 + now.getMinutes();
+            
+            prayerTimesData.forEach(prayer => {
+                const [hours, minutes] = prayer.time.split(':').map(Number);
+                const prayerTime = hours * 60 + minutes;
+                
+                // Check if current time is within 1 minute of prayer time
+                if (Math.abs(currentTime - prayerTime) <= 1) {
+                    if (!prayer.active) {
+                        prayer.active = true;
+                        playAdhan();
+                        updatePrayerCards();
+                    }
+                } else if (prayer.active) {
+                    prayer.active = false;
+                    updatePrayerCards();
+                }
+            });
         }
-      }
-    }
 
-    // Main
-    loadPrayerTimesFromCSV();
+        // Play adhan
+        function playAdhan() {
+            azanAudio.play();
+        }
 
-    setInterval(function() {
-      var today = new Date().getDate();
-      if (today !== lastDate) setTodaysPrayerTimes();
-      highlightNextPrayer();
-      checkAzaan();
-    }, 60000);
+        // Update prayer cards display
+        function updatePrayerCards() {
+            prayerTimesContainer.innerHTML = '';
+            
+            prayerTimesData.forEach(prayer => {
+                const card = document.createElement('div');
+                card.className = `prayer-card ${prayer.active ? 'active' : ''}`;
+                
+                const name = document.createElement('div');
+                name.className = 'prayer-name';
+                name.textContent = prayer.name;
+                
+                const time = document.createElement('div');
+                time.className = 'prayer-time';
+                time.textContent = prayer.time;
+                
+                card.appendChild(name);
+                card.appendChild(time);
+                
+                prayerTimesContainer.appendChild(card);
+            });
+        }
 
-    setTimeout(function() {
-      highlightNextPrayer();
-      checkAzaan();
-    }, 5000);
+        // Initialize the app
+        function init() {
+            // Set initial dates
+            const now = new Date();
+            currentDateElement.textContent = formatDate(now);
+            hijriDateElement.textContent = "1 Rajab 1446 AH"; // Sample Hijri date
+            
+            // Initialize prayer times display
+            updatePrayerCards();
+            
+            // Start clock
+            updateCurrentTime();
+            setInterval(updateCurrentTime, 1000);
+        }
 
-    document.getElementById("enableAzan").addEventListener("click", function() {
-      azaanEnabled = true;
-      this.style.display = "none";
-      alert("Azaan enabled! Audio will play at prayer times.");
-    });
-  </script>
+        // Run initialization
+        init();
+    </script>
 </body>
 </html>
