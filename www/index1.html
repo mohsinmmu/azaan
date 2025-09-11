@@ -1,0 +1,60 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Prayer Times Widget</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      background: #f9f9f9;
+      margin: 0;
+      padding: 20px;
+      text-align: center;
+    }
+    h1 {
+      color: #118c4e;
+    }
+    .widget-container {
+      max-width: 800px;
+      margin: 20px auto;
+      background: #fff;
+      padding: 15px;
+      border-radius: 12px;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+    }
+    iframe {
+      width: 100%;
+      border: none;
+    }
+  </style>
+</head>
+<body>
+
+  <h1>Prayer Times</h1>
+
+  <div class="widget-container">
+    <iframe 
+      id="msi_481"
+      src="https://quranonline.net/place/521460924/multiscreen/?
+        screens[]=salat-times/?language%3Ddefault%26numbers%3Dwestern%26clock-type%3Danalog%26show-poweredby%3Dfalse%26iqama-enable%3Dtrue%26iqama-show-times%3Dtrue%26color-background%3D%23ffffff%26color-date%3D%23118c4e%26color-digital-clock%3D%23000000%26color-athan-now%3D%23f3a829%26color-salat%3D%233b444c%26color-iqama-time%3D%23d94a3f|10
+        &screens[]=salat-times/?language%3Darabic%26numbers%3Dwestern%26clock-type%3Danalog%26show-poweredby%3Dfalse%26iqama-enable%3Dtrue%26iqama-show-times%3Dtrue%26color-background%3D%23ffffff%26color-date%3D%23118c4e%26color-digital-clock%3D%23000000%26color-athan-now%3D%23f3a829%26color-salat%3D%233b444c%26color-iqama-time%3D%23d94a3f|10
+        &screens[]=analog-clock/?color-second-hand%3D%23f3a829%26clock-adjustment%3D0%26show-poweredby%3Dfalse|10
+        &athan-mode=true&athan-mode-screens=0,1&athan-screen-audio=true"
+      allowfullscreen
+      style="height: 400px;">
+    </iframe>
+  </div>
+
+  <script>
+    // Responsive iframe height (60% of width)
+    var msi_481 = document.getElementById("msi_481");
+    function resizeIframe() {
+      msi_481.style.height = (msi_481.offsetWidth * 0.6) + "px";
+    }
+    window.addEventListener("resize", resizeIframe);
+    resizeIframe();
+  </script>
+
+</body>
+</html>
