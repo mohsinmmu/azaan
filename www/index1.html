@@ -1,47 +1,206 @@
-function getPrayerTimes() {
-  var xhr = new XMLHttpRequest();
-  xhr.open("GET", "https://api.collectapi.com/pray/all?city=London", true);
-  xhr.setRequestHeader("authorization", "apikey your_token");
-  xhr.setRequestHeader("content-type", "application/json");
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8">
+  <title>Prayer Times - London</title>
+  <style>
+    body {
+      background: #2d9471;
+      color: #fff;
+      font-family: Arial, sans-serif;
+      padding: 20px;
+    }
+    button {
+      padding: 10px 20px;
+      font-size: 16px;
+      border-radius: 6px;
+      border: none;
+      background: #ffcc00;
+      color: #000;
+      cursor: pointer;
+      margin-bottom: 20px;
+    }
+    .row {
+      display: block;
+      margin-bottom: 15px;
+      padding: 8px;
+      border-radius: 6px;
+    }
+    .label {
+      font-weight: bold;
+      display: inline-block;
+      width: 120px;
+    }
+    .value {
+      display: inline-block;
+    }
+    .divider {
+      border-bottom: 1px solid #fff;
+      margin: 10px 0;
+    }
+    .highlight {
+      background: #ffcc00;
+      color: #000;
+    }
+  </style>
+</head>
+<body>
+  <h2>London Prayer Times</h2>
 
-  xhr.onreadystatechange = function() {
-    if (xhr.readyState === 4) {
-      if (xhr.status === 200) {
-        try {
-          var data = JSON.parse(xhr.responseText);
-          var times = {};
-          
-          // Map CollectAPI result to your IDs
-          for (var i = 0; i < data.result.length; i++) {
-            var item = data.result[i];
-            if (item.vakit === "İmsak") times.fajr = item.saat;
-            else if (item.vakit === "Öğle") times.dhuhr = item.saat;
-            else if (item.vakit === "İkindi") times.asr = item.saat;
-            else if (item.vakit === "Akşam") times.maghrib = item.saat;
-            else if (item.vakit === "Yatsı") times.isha = item.saat;
+  <!-- Enable Azaan button -->
+  <button id="enableAzan">Enable Azaan</button>
+
+  <div id="row-fajr" class="row"><span class="label">Fajr:</span> <span id="fajr" class="value">Loading...</span></div>
+  <div class="row"><span class="label">Fajr Jama'ah:</span> <span id="fajr-jamat" class="value">Loading...</span></div>
+  <div class="divider"></div>
+
+  <div id="row-dhuhr" class="row"><span class="label">Dhuhr:</span> <span id="dhuhr" class="value">Loading...</span></div>
+  <div class="row"><span class="label">Dhuhr Jama'ah:</span> <span id="dhuhr-jamat" class="value">Loading...</span></div>
+  <div class="divider"></div>
+
+  <div id="row-asr" class="row"><span class="label">Asr:</span> <span id="asr" class="value">Loading...</span></div>
+  <div class="row"><span class="label">Asr Jama'ah:</span> <span id="asr-jamat" class="value">Loading...</span></div>
+  <div class="divider"></div>
+
+  <div id="row-maghrib" class="row"><span class="label">Maghrib:</span> <span id="maghrib" class="value">Loading...</span></div>
+  <div class="row"><span class="label">Maghrib Jama'ah:</span> <span id="maghrib-jamat" class="value">Loading...</span></div>
+  <div class="divider"></div>
+
+  <div id="row-isha" class="row"><span class="label">Isha:</span> <span id="isha" class="value">Loading...</span></div>
+  <div class="row"><span class="label">Isha Jama'ah:</span> <span id="isha-jamat" class="value">Loading...</span></div>
+
+  <!-- Hosted Azaan audio -->
+  <audio id="azaan" src="https://www.islamcan.com/audio/adhan/azan1.mp3" preload="auto"></audio>
+
+  <script>
+    var lastDate = null;
+    var prayerTimes = {};
+    var prayerOrder = ["fajr", "dhuhr", "asr", "maghrib", "isha"];
+    var azaanPlayed = {};
+    var azaanEnabled = false;
+
+    function getPrayerTimes() {
+      var xhr = new XMLHttpRequest();
+      xhr.open("GET", "https://api.collectapi.com/pray/all?city=London", true);
+      xhr.setRequestHeader("authorization", "apikey 4cRyBNTmLjxa2hDNvFdqTN:4yAPVdcoPhHeGVT2bFq1pJ");
+      xhr.setRequestHeader("content-type", "application/json");
+
+      xhr.onreadystatechange = function() {
+        if (xhr.readyState === 4) {
+          if (xhr.status === 200) {
+            try {
+              var data = JSON.parse(xhr.responseText);
+              var times = {};
+
+              for (var i = 0; i < data.result.length; i++) {
+                var item = data.result[i];
+                if (item.vakit === "İmsak") times.fajr = item.saat;
+                else if (item.vakit === "Öğle") times.dhuhr = item.saat;
+                else if (item.vakit === "İkindi") times.asr = item.saat;
+                else if (item.vakit === "Akşam") times.maghrib = item.saat;
+                else if (item.vakit === "Yatsı") times.isha = item.saat;
+              }
+
+              document.getElementById("fajr").innerHTML = times.fajr;
+              document.getElementById("dhuhr").innerHTML = times.dhuhr;
+              document.getElementById("asr").innerHTML = times.asr;
+              document.getElementById("maghrib").innerHTML = times.maghrib;
+              document.getElementById("isha").innerHTML = times.isha;
+
+              prayerTimes = times;
+              lastDate = new Date().getDate();
+              azaanPlayed = {};
+
+            } catch(e) {
+              console.log("Error parsing JSON: " + e);
+              retryFetch();
+            }
+          } else {
+            console.log("Request failed: " + xhr.status);
+            retryFetch();
           }
-
-          // Fill HTML
-          document.getElementById("fajr").innerHTML = times.fajr;
-          document.getElementById("dhuhr").innerHTML = times.dhuhr;
-          document.getElementById("asr").innerHTML = times.asr;
-          document.getElementById("maghrib").innerHTML = times.maghrib;
-          document.getElementById("isha").innerHTML = times.isha;
-
-          // Save for highlight/azaans
-          prayerTimes = times;
-          lastDate = new Date().getDate();
-          azaanPlayed = {};
-        } catch(e) {
-          console.log("Error parsing JSON: " + e);
-          retryFetch();
         }
-      } else {
-        console.log("Request failed: " + xhr.status);
-        retryFetch();
+      };
+
+      xhr.send();
+    }
+
+    function retryFetch() {
+      setTimeout(getPrayerTimes, 60000);
+    }
+
+    function parseTime(timeStr) {
+      var parts = timeStr.split(":");
+      if (parts.length < 2) return null;
+      var d = new Date();
+      d.setSeconds(0);
+      d.setMilliseconds(0);
+      d.setHours(parseInt(parts[0], 10));
+      d.setMinutes(parseInt(parts[1], 10));
+      return d;
+    }
+
+    function highlightNextPrayer() {
+      for (var i = 0; i < prayerOrder.length; i++) {
+        var row = document.getElementById("row-" + prayerOrder[i]);
+        if (row) row.className = "row";
+      }
+
+      var now = new Date();
+      var nextPrayer = null;
+
+      for (var j = 0; j < prayerOrder.length; j++) {
+        var prayer = prayerOrder[j];
+        var t = parseTime(prayerTimes[prayer]);
+        if (t && t.getTime() > now.getTime()) {
+          nextPrayer = prayer;
+          break;
+        }
+      }
+
+      if (!nextPrayer) nextPrayer = "fajr";
+
+      var rowNext = document.getElementById("row-" + nextPrayer);
+      if (rowNext) rowNext.className = "row highlight";
+    }
+
+    function checkAzaan() {
+      if (!azaanEnabled) return;
+
+      var now = new Date();
+      for (var i = 0; i < prayerOrder.length; i++) {
+        var prayer = prayerOrder[i];
+        var t = parseTime(prayerTimes[prayer]);
+        if (t) {
+          var diff = Math.abs(now.getTime() - t.getTime());
+          if (diff < 60000 && !azaanPlayed[prayer]) {
+            document.getElementById("azaan").play();
+            azaanPlayed[prayer] = true;
+          }
+        }
       }
     }
-  };
 
-  xhr.send();
-}
+    getPrayerTimes();
+
+    setInterval(function() {
+      var today = new Date().getDate();
+      if (today !== lastDate) getPrayerTimes();
+
+      highlightNextPrayer();
+      checkAzaan();
+    }, 60000);
+
+    setTimeout(function() {
+      highlightNextPrayer();
+      checkAzaan();
+    }, 5000);
+
+    document.getElementById("enableAzan").addEventListener("click", function() {
+      azaanEnabled = true;
+      this.style.display = "none";
+      alert("Azaan enabled! Audio will play at prayer times.");
+    });
+  </script>
+</body>
+</html>
